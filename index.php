@@ -1,6 +1,11 @@
-<?php
-
-for ($i = 0; $i < 10; $i++) {
-    echo "Hello, World! This is a simple PHP script running on a web server. <h1>hola</h1>";
-}
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio</title>
+</head>
+<body>
+    <a href="login.php" rel="noopener noreferrer">IR A LOGIN</a>
+</body>
+</html>

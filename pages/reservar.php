@@ -8,79 +8,137 @@ require '../layout/header.php';
         <select class="form-select" id="cliente">
             <option value="0" disabled selected>Seleccione un Cliente</option>
             <?php
-                $clientes = mysqli_query($conn, "SELECT id, nombre FROM cliente WHERE estado = 1 ORDER BY nombre ASC");
-                foreach ($clientes as $cliente) {
-                    echo "<option value='{$cliente['id']}'>{$cliente['nombre']}</option>";
-                }
+            $clientes = mysqli_query($conn, "SELECT id, nombre FROM cliente WHERE estado = 1 ORDER BY nombre ASC");
+            foreach ($clientes as $cliente) {
+                echo "<option value='{$cliente['id']}'>{$cliente['nombre']}</option>";
+            }
             ?>
         </select>
     </div>
+
     <div>
         <h5>Libros disponibles para reservar:</h5>
         <div class="table-responsive">
-            <table id="example" class="display" width="100%"></table>
+            <table id="tablaLibros" class="display w-100">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Autor</th>
+                        <th>Género</th>
+                        <th>Año</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $resultado = mysqli_query($conn, "SELECT id, nombre, autor, genero, anno FROM libro WHERE estado = 1");
+                    while ($row = mysqli_fetch_assoc($resultado)) {
+                        echo "<tr id='libro-{$row['id']}'>
+                                <td>{$row['nombre']}</td>
+                                <td>{$row['autor']}</td>
+                                <td>{$row['genero']}</td>
+                                <td>{$row['anno']}</td>
+                                <td class='text-center'>
+                                    <button class='btn btn-sm btn-success' onclick='mostrarFechaReservacion({$row['id']})'>Reservar <span data-feather=\"user-check\" class=\"align-text-bottom\"></span></button>
+                                </td>
+                              </tr>";
+                    }
+                    ?>
+                </tbody>
+            </table>
         </div>
     </div>
+</div>
 
+<!-- Modal -->
+<div class="modal fade" id="modalReservar" tabindex="-1" aria-labelledby="modalReservarLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="modalReservarLabel">Seleccione la fecha de devolución</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="confirmarReservacion(); return false;">
+                    <input type="hidden" id="libroAReservar" value="0">
+                    <div class="mb-3">
+                        <label for="fechaDevolcion" class="form-label">Fecha</label>
+                        <input type="date" class="form-control" id="fechaDevolcion" min="<?= date('Y-m-d') ?>" max="<?= date('Y-m-d', (time() + (86400 * 30))) ?>" required>
+                    </div>
+                    <div class="mb-3 text-center">
+                        <button type="submit" class="btn btn-primary">Confirmar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    var dataSet = [
-        ['Tiger Nixon', 'System Architect', 'Edinburgh', '5421', '2011/04/25', '$320,800'],
-        ['Garrett Winters', 'Accountant', 'Tokyo', '8422', '2011/07/25', '$170,750'],
-        ['Ashton Cox', 'Junior Technical Author', 'San Francisco', '1562', '2009/01/12', '$86,000'],
-        ['Cedric Kelly', 'Senior Javascript Developer', 'Edinburgh', '6224', '2012/03/29', '$433,060'],
-        ['Airi Satou', 'Accountant', 'Tokyo', '5407', '2008/11/28', '$162,700'],
-        ['Brielle Williamson', 'Integration Specialist', 'New York', '4804', '2012/12/02', '$372,000'],
-        ['Herrod Chandler', 'Sales Assistant', 'San Francisco', '9608', '2012/08/06', '$137,500'],
-        ['Rhona Davidson', 'Integration Specialist', 'Tokyo', '6200', '2010/10/14', '$327,900'],
-        ['Colleen Hurst', 'Javascript Developer', 'San Francisco', '2360', '2009/09/15', '$205,500'],
-        ['Sonya Frost', 'Software Engineer', 'Edinburgh', '1667', '2008/12/13', '$103,600'],
-        ['Jena Gaines', 'Office Manager', 'London', '3814', '2008/12/19', '$90,560'],
-        ['Quinn Flynn', 'Support Lead', 'Edinburgh', '9497', '2013/03/03', '$342,000'],
-        ['Charde Marshall', 'Regional Director', 'San Francisco', '6741', '2008/10/16', '$470,600'],
-        ['Haley Kennedy', 'Senior Marketing Designer', 'London', '3597', '2012/12/18', '$313,500'],
-        ['Tatyana Fitzpatrick', 'Regional Director', 'London', '1965', '2010/03/17', '$385,750'],
-        ['Michael Silva', 'Marketing Designer', 'London', '1581', '2012/11/27', '$198,500'],
-        ['Paul Byrd', 'Chief Financial Officer (CFO)', 'New York', '3059', '2010/06/09', '$725,000'],
-        ['Gloria Little', 'Systems Administrator', 'New York', '1721', '2009/04/10', '$237,500'],
-        ['Bradley Greer', 'Software Engineer', 'London', '2558', '2012/10/13', '$132,000'],
-        ['Dai Rios', 'Personnel Lead', 'Edinburgh', '2290', '2012/09/26', '$217,500'],
-        ['Jenette Caldwell', 'Development Lead', 'New York', '1937', '2011/09/03', '$345,000'],
-        ['Yuri Berry', 'Chief Marketing Officer (CMO)', 'New York', '6154', '2009/06/25', '$675,000'],
-        ['Caesar Vance', 'Pre-Sales Support', 'New York', '8330', '2011/12/12', '$106,450'],
-        ['Doris Wilder', 'Sales Assistant', 'Sydney', '3023', '2010/09/20', '$85,600'],
-        ['Angelica Ramos', 'Chief Executive Officer (CEO)', 'London', '5797', '2009/10/09', '$1,200,000'],
-        ['Gavin Joyce', 'Developer', 'Edinburgh', '8822', '2010/12/22', '$92,575'],
-        ['Jennifer Chang', 'Regional Director', 'Singapore', '9239', '2010/11/14', '$357,650'],
-        ['Brenden Wagner', 'Software Engineer', 'San Francisco', '1314', '2011/06/07', '$206,850'],
-        ['Fiona Green', 'Chief Operating Officer (COO)', 'San Francisco', '2947', '2010/03/11', '$850,000'],
-        ['Shou Itou', 'Regional Marketing', 'Tokyo', '8899', '2011/08/14', '$163,000'],
-        ['Michelle House', 'Integration Specialist', 'Sydney', '2769', '2011/06/02', '$95,400'],
-        ['Suki Burks', 'Developer', 'London', '6832', '2009/10/22', '$114,500'],
-        ['Prescott Bartlett', 'Technical Author', 'London', '3606', '2011/05/07', '$145,000'],
-        ['Gavin Cortez', 'Team Leader', 'San Francisco', '2860', '2008/10/26', '$235,500'],
-        ['Martena Mccray', 'Post-Sales support', 'Edinburgh', '8240', '2011/03/09', '$324,050'],
-        ['Unity Butler', 'Marketing Designer', 'San Francisco', '5384', '2009/12/09', '$85,675'],
-    ];
-
-    new DataTable('#example', {
-        columns: [
-            { title: 'Nombre' },
-            { title: 'Puesto' },
-            { title: 'Oficina' },
-            { title: 'Ext.' },
-            { title: 'Fecha de inicio' },
-            { title: 'Salario' }
-        ],
-        data: dataSet,
-        language: {
-            url: 'https://cdn.datatables.net/plug-ins/2.0.7/i18n/es-ES.json'
-        }
+    document.addEventListener('DOMContentLoaded', function() {
+        new DataTable('#tablaLibros', {
+            language: {
+                url: 'https://cdn.datatables.net/plug-ins/2.0.7/i18n/es-ES.json'
+            }
+        });
     });
-});
-</script>
+
+    function mostrarFechaReservacion(id) {
+        const clienteId = document.getElementById('cliente').value;
+        if (clienteId == 0) {
+            alert('Por favor, seleccione un cliente.');
+            return;
+        }
+        const modal = new bootstrap.Modal(document.getElementById('modalReservar'));
+        modal.show();
+        document.getElementById('libroAReservar').value = id;
+    }
+
+    function confirmarReservacion() {
+        const libroId = document.getElementById('libroAReservar').value;
+        const clienteId = document.getElementById('cliente').value;
+        const fechaDevolucion = document.getElementById('fechaDevolcion').value;
+
+        if (libroId == 0 || clienteId == 0 || !fechaDevolucion) {
+            alert('Por favor, complete todos los campos.');
+            return;
+        }
+
+        fetch('../system/ajax.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    accion: 'reservar',
+                    libro_id: libroId,
+                    cliente_id: clienteId,
+                    fecha_devolucion: fechaDevolucion
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const fila = document.getElementById('libro-' + libroId);
+                    fila.parentNode.removeChild(fila);
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalReservar'));
+                    modal.hide();
+                    Swal.fire({
+                        title: "Exito!",
+                        text: data.message,
+                        icon: "success"
+                    });
+                } else {
+                    Swal.fire({
+                        title: "Error!",
+                        text: data.message,
+                        icon: "error"
+                    });
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
 </script>
 <?php
 require '../layout/footer.php';
+?>
