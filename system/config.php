@@ -1,4 +1,6 @@
 <?php
+//zone time
+date_default_timezone_set('America/Costa_Rica');
 //conexion a la base de datos mysql con mysqli
 $host = 'localhost';
 $usuario = 'root';

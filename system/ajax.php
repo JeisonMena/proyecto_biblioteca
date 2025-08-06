@@ -21,10 +21,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             break;
-        default:
+             case 'listar_reservas':
+            if (isset($data['cliente_id'])) {
+                $cliente_id = intval($data['cliente_id']);
+                $reservas = [];
+                $sql = "
+                    SELECT r.id as reserva_id, l.nombre, l.autor, l.genero, r.fecha_devolucion
+                    FROM reserva r
+                    INNER JOIN libro l ON l.id = r.libro_id
+                    WHERE r.cliente_id = $cliente_id AND r.estado = 1
+                ";
+                $q = mysqli_query($conn, $sql);
+                while ($r = mysqli_fetch_assoc($q)) {
+                    $reservas[] = $r;
+                }
+                $respuesta = json_encode(['success'=>true, 'prestamos'=>$reservas]);
+            }
+            break;
+            case 'devolver':
+            if (isset($data['reserva_id'])) {
+                $reserva_id = intval($data['reserva_id']);
+                $query = "UPDATE reserva SET estado=0, fecha_devuelto=NOW() WHERE id=$reserva_id";
+                if (mysqli_query($conn, $query)) {
+                    $q = mysqli_query($conn, "SELECT libro_id FROM reserva WHERE id = $reserva_id");
+                    $libro = mysqli_fetch_assoc($q);
+                    if ($libro) {
+                        $libro_id = intval($libro['libro_id']);
+                        mysqli_query($conn, "UPDATE libro SET estado=1 WHERE id=$libro_id");
+                        $respuesta = json_encode(['success' => true, 'message' => 'Libro devuelto correctamente.']);
+                    }
+                } else {
+                    $respuesta = json_encode(['success' => false, 'message' => 'No se pudo actualizar la reserva.']);
+                }
+            }
+            break;
+            
+            default:
             $respuesta = json_encode(['success' => false, 'message' => 'Acción no reconocida.']);
             break;
+             
     }
 }
 
 echo $respuesta;
+?>
